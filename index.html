@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tick Tock Time!</title>
+<meta name="theme-color" content="#2B3A67">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tick Tock">
+<style>
+  :root {
+    --cream: #FFF8EC;
+    --navy: #2B3A67;
+    --coral: #FF6B6B;
+    --yellow: #FFC93C;
+    --mint: #4ECDC4;
+    --purple: #9B72CF;
+    --ink: #2B2B2B;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    overscroll-behavior: none;
+  }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, 'Trebuchet MS', 'Segoe UI', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 16px 40px;
+  }
+
+  h1 {
+    font-size: clamp(26px, 6vw, 40px);
+    margin: 8px 0 2px;
+    color: var(--navy);
+    text-align: center;
+  }
+
+  .subtitle {
+    color: #6b6b6b;
+    margin: 0 0 16px;
+    font-size: clamp(13px, 3vw, 16px);
+    text-align: center;
+  }
+
+  .stage {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .clock-panel {
+    background: white;
+    border-radius: 28px;
+    padding: 20px;
+    box-shadow: 0 8px 0 rgba(43,58,103,0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  svg { touch-action: none; user-select: none; display: block; }
+
+  .hand { cursor: grab; touch-action: none; }
+  .hand:active { cursor: grabbing; }
+  .hand-hit { cursor: grab; touch-action: none; }
+
+  .readout {
+    margin-top: 16px;
+    font-size: 38px;
+    font-weight: 800;
+    color: var(--navy);
+    background: var(--yellow);
+    padding: 8px 26px;
+    border-radius: 16px;
+    letter-spacing: 1px;
+  }
+
+  .phrase {
+    margin-top: 8px;
+    font-size: 19px;
+    color: var(--coral);
+    font-weight: 700;
+    min-height: 26px;
+    text-align: center;
+  }
+
+  .side-panel {
+    background: white;
+    border-radius: 28px;
+    padding: 20px;
+    box-shadow: 0 8px 0 rgba(43,58,103,0.12);
+    width: 280px;
+    max-width: 90vw;
+  }
+
+  .side-panel h2 {
+    margin: 0 0 12px;
+    font-size: 19px;
+    color: var(--navy);
+  }
+
+  .mode-btns {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .mode-btns button {
+    flex: 1;
+    min-width: 90px;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 6px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    background: #EFEAF9;
+    color: var(--navy);
+  }
+  .mode-btns button.active {
+    background: var(--purple);
+    color: white;
+  }
+  .mode-btns button:active { transform: scale(0.95); }
+
+  .activity-card {
+    background: var(--mint);
+    border-radius: 18px;
+    padding: 18px;
+    text-align: center;
+    color: white;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .activity-emoji { font-size: 46px; margin-bottom: 6px; }
+  .activity-name { font-size: 16px; font-weight: 700; }
+  .activity-time { font-size: 13px; opacity: 0.9; margin-top: 2px; }
+
+  .challenge-box {
+    background: #FFF1DC;
+    border-radius: 18px;
+    padding: 18px;
+    text-align: center;
+  }
+  .challenge-target {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--navy);
+    margin: 6px 0;
+  }
+  .challenge-status {
+    font-size: 15px;
+    font-weight: 700;
+    min-height: 22px;
+  }
+  .status-good { color: #2E9E5B; }
+
+  .next-btn {
+    margin-top: 10px;
+    border: none;
+    background: var(--coral);
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 10px 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    width: 100%;
+  }
+  .next-btn:active { transform: scale(0.96); }
+
+  .score {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--navy);
+    font-weight: 700;
+  }
+
+  .legend {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-size: 11px;
+    color: #6b6b6b;
+  }
+  .legend span { display: flex; align-items: center; gap: 4px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+  .install-banner {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--navy);
+    color: white;
+    padding: 12px 16px;
+    text-align: center;
+    font-size: 14px;
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+  .install-banner button {
+    background: var(--yellow);
+    color: var(--navy);
+    border: none;
+    font-weight: 800;
+    padding: 8px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h1>Tick Tock Time! 🕐</h1>
+<p class="subtitle">Drag the hands and learn to read the clock</p>
+
+<div class="stage">
+  <div class="clock-panel">
+    <svg id="clockSvg" width="280" height="280" viewBox="0 0 300 300"></svg>
+    <div class="readout" id="readout">7:00</div>
+    <div class="phrase" id="phrase"></div>
+    <div class="legend">
+      <span><i class="dot" style="background:#FFC93C"></i>o'clock</span>
+      <span><i class="dot" style="background:#FF6B6B"></i>quarter past</span>
+      <span><i class="dot" style="background:#4ECDC4"></i>half past</span>
+      <span><i class="dot" style="background:#9B72CF"></i>quarter to</span>
+    </div>
+  </div>
+
+  <div class="side-panel">
+    <h2>Choose a game</h2>
+    <div class="mode-btns">
+      <button id="btnFree" class="active">Free Play</button>
+      <button id="btnMatch">Match Time</button>
+      <button id="btnChallenge">Challenge</button>
+    </div>
+
+    <div id="freePlayBox">
+      <div class="activity-card" id="activityCard">
+        <div class="activity-emoji">🌅</div>
+        <div class="activity-name">Getting ready!</div>
+        <div class="activity-time">Move the hands to see the day unfold</div>
+      </div>
+    </div>
+
+    <div id="matchBox" style="display:none;">
+      <div class="activity-card" id="matchCard">
+        <div class="activity-emoji">🍳</div>
+        <div class="activity-name">Breakfast time!</div>
+        <div class="activity-time" id="matchTarget">Set the clock to 8:00</div>
+      </div>
+      <div class="challenge-status" id="matchStatus" style="text-align:center;margin-top:8px;"></div>
+      <button class="next-btn" id="matchNext">New Activity ➜</button>
+    </div>
+
+    <div id="challengeBox" style="display:none;">
+      <div class="challenge-box">
+        <div>Set the clock to</div>
+        <div class="challenge-target" id="challengeTarget">3:00</div>
+        <div class="challenge-status" id="challengeStatus"></div>
+        <button class="next-btn" id="challengeNext">New Time ➜</button>
+        <div class="score" id="score">Score: 0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="install-banner" id="installBanner">
+  <span>Add Tick Tock Time to your home screen!</span>
+  <button id="installBtn">Install</button>
+</div>
+
+<script>
+const svgNS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById('clockSvg');
+const CX = 150, CY = 150, R = 130;
+
+function polarToXY(cx, cy, r, angleDeg) {
+  const rad = (angleDeg - 90) * Math.PI / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+const zoneColors = ['#FFF3C4', '#FFD9D9', '#CDF2EF', '#E6D9F7'];
+function makeWedge(startDeg, endDeg, color) {
+  const p1 = polarToXY(CX, CY, R, startDeg);
+  const p2 = polarToXY(CX, CY, R, endDeg);
+  const large = (endDeg - startDeg) > 180 ? 1 : 0;
+  const path = document.createElementNS(svgNS, 'path');
+  path.setAttribute('d', `M${CX},${CY} L${p1.x},${p1.y} A${R},${R} 0 ${large} 1 ${p2.x},${p2.y} Z`);
+  path.setAttribute('fill', color);
+  svg.appendChild(path);
+}
+makeWedge(0, 90, zoneColors[1]);
+makeWedge(90, 180, zoneColors[2]);
+makeWedge(180, 270, zoneColors[3]);
+makeWedge(270, 360, zoneColors[0]);
+
+const ring = document.createElementNS(svgNS, 'circle');
+ring.setAttribute('cx', CX); ring.setAttribute('cy', CY); ring.setAttribute('r', R);
+ring.setAttribute('fill', 'none');
+ring.setAttribute('stroke', '#2B3A67');
+ring.setAttribute('stroke-width', '6');
+svg.appendChild(ring);
+
+for (let i = 0; i < 60; i++) {
+  const angle = i * 6;
+  const isHour = i % 5 === 0;
+  const p1 = polarToXY(CX, CY, R - (isHour ? 16 : 8), angle);
+  const p2 = polarToXY(CX, CY, R - 2, angle);
+  const tick = document.createElementNS(svgNS, 'line');
+  tick.setAttribute('x1', p1.x); tick.setAttribute('y1', p1.y);
+  tick.setAttribute('x2', p2.x); tick.setAttribute('y2', p2.y);
+  tick.setAttribute('stroke', '#2B3A67');
+  tick.setAttribute('stroke-width', isHour ? 3 : 1.5);
+  svg.appendChild(tick);
+}
+
+for (let n = 1; n <= 12; n++) {
+  const angle = n * 30;
+  const pos = polarToXY(CX, CY, R - 32, angle);
+  const text = document.createElementNS(svgNS, 'text');
+  text.setAttribute('x', pos.x);
+  text.setAttribute('y', pos.y + 7);
+  text.setAttribute('text-anchor', 'middle');
+  text.setAttribute('font-size', '20');
+  text.setAttribute('font-weight', '800');
+  text.setAttribute('fill', '#2B3A67');
+  text.textContent = n;
+  svg.appendChild(text);
+}
+
+function createHand(length, width, color, hitWidth) {
+  const g = document.createElementNS(svgNS, 'g');
+  const hit = document.createElementNS(svgNS, 'line');
+  hit.setAttribute('x1', CX); hit.setAttribute('y1', CY);
+  hit.setAttribute('x2', CX); hit.setAttribute('y2', CY - length);
+  hit.setAttribute('stroke', 'transparent');
+  hit.setAttribute('stroke-width', hitWidth);
+  hit.setAttribute('stroke-linecap', 'round');
+  hit.setAttribute('class', 'hand-hit');
+  const line = document.createElementNS(svgNS, 'line');
+  line.setAttribute('x1', CX); line.setAttribute('y1', CY);
+  line.setAttribute('x2', CX); line.setAttribute('y2', CY - length);
+  line.setAttribute('stroke', color);
+  line.setAttribute('stroke-width', width);
+  line.setAttribute('stroke-linecap', 'round');
+  line.setAttribute('class', 'hand');
+  g.appendChild(hit);
+  g.appendChild(line);
+  svg.appendChild(g);
+  return { line, hit, length };
+}
+
+// state: minutes since 12:00, 0..719 (12*60 - 1), continuous total-minute model avoids all rollover bugs
+let totalMinutes = 7 * 60; // start at 7:00
+
+const hourHand = createHand(65, 8, '#2B3A67', 26);
+const minuteHand = createHand(100, 5, '#FF6B6B', 20);
+
+const cap = document.createElementNS(svgNS, 'circle');
+cap.setAttribute('cx', CX); cap.setAttribute('cy', CY); cap.setAttribute('r', 8);
+cap.setAttribute('fill', '#FFC93C');
+cap.setAttribute('stroke', '#2B3A67');
+cap.setAttribute('stroke-width', '2');
+svg.appendChild(cap);
+
+function render() {
+  const m = totalMinutes % 60;
+  const hDecimal = (totalMinutes / 60) % 12;
+  const hourAngle = hDecimal * 30;
+  const minuteAngle = m * 6;
+
+  const hp = polarToXY(CX, CY, hourHand.length, hourAngle);
+  hourHand.line.setAttribute('x2', hp.x); hourHand.line.setAttribute('y2', hp.y);
+  hourHand.hit.setAttribute('x2', hp.x); hourHand.hit.setAttribute('y2', hp.y);
+
+  const mp = polarToXY(CX, CY, minuteHand.length, minuteAngle);
+  minuteHand.line.setAttribute('x2', mp.x); minuteHand.line.setAttribute('y2', mp.y);
+  minuteHand.hit.setAttribute('x2', mp.x); minuteHand.hit.setAttribute('y2', mp.y);
+
+  let h = Math.floor(totalMinutes / 60) % 12;
+  if (h === 0) h = 12;
+  document.getElementById('readout').textContent = `${h}:${String(m).padStart(2,'0')}`;
+
+  const phraseEl = document.getElementById('phrase');
+  let phrase = '';
+  if (m === 0) phrase = `${h} o'clock`;
+  else if (m === 15) phrase = `quarter past ${h}`;
+  else if (m === 30) phrase = `half past ${h}`;
+  else if (m === 45) phrase = `quarter to ${h === 12 ? 1 : h + 1}`;
+  else phrase = `${m} minutes past ${h}`;
+  phraseEl.textContent = phrase;
+
+  checkMode(h, m);
+}
+
+function setTime(h, m) {
+  totalMinutes = ((h % 12) * 60 + m + 720) % 720;
+  render();
+}
+
+// ---- Dragging ----
+function angleFromEvent(evt) {
+  const rect = svg.getBoundingClientRect();
+  const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+  const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+  const x = (clientX - rect.left) * (300 / rect.width) - CX;
+  const y = (clientY - rect.top) * (300 / rect.height) - CY;
+  let deg = Math.atan2(y, x) * 180 / Math.PI + 90;
+  if (deg < 0) deg += 360;
+  return deg;
+}
+
+let dragging = null;
+
+function startDrag(which) {
+  return function(evt) {
+    evt.preventDefault();
+    dragging = which;
+  };
+}
+
+[hourHand.hit, hourHand.line].forEach(el => {
+  el.addEventListener('mousedown', startDrag('hour'));
+  el.addEventListener('touchstart', startDrag('hour'), {passive:false});
+});
+[minuteHand.hit, minuteHand.line].forEach(el => {
+  el.addEventListener('mousedown', startDrag('minute'));
+  el.addEventListener('touchstart', startDrag('minute'), {passive:false});
+});
+
+function moveHandler(evt) {
+  if (!dragging) return;
+  evt.preventDefault();
+  const deg = angleFromEvent(evt);
+
+  if (dragging === 'minute') {
+    const snappedM = Math.round(deg / 6) % 60;
+    const currentH = Math.floor(totalMinutes / 60) % 12;
+    const prevM = totalMinutes % 60;
+    let newTotal = currentH * 60 + snappedM;
+
+    // detect wrap direction to bump the hour forward/back smoothly
+    const diff = snappedM - prevM;
+    if (diff > 30) newTotal -= 60;      // went backwards past 0 (e.g. 5 -> 55)
+    else if (diff < -30) newTotal += 60; // went forwards past 0 (e.g. 55 -> 5)
+
+    totalMinutes = ((newTotal % 720) + 720) % 720;
+    render();
+  } else {
+    const snappedHourStep = Math.round(deg / 30) % 12; // 0..11, 0 = 12
+    const m = totalMinutes % 60;
+    totalMinutes = (snappedHourStep * 60 + m) % 720;
+    render();
+  }
+}
+
+window.addEventListener('mousemove', moveHandler);
+window.addEventListener('touchmove', moveHandler, {passive:false});
+window.addEventListener('mouseup', () => dragging = null);
+window.addEventListener('touchend', () => dragging = null);
+
+// ---- Free play activities ----
+const activities = [
+  {h:[6,7], emoji:'🌅', name:'Wake up time!'},
+  {h:[7,8], emoji:'🪥', name:'Brushing teeth'},
+  {h:[8,9], emoji:'🍳', name:'Breakfast time!'},
+  {h:[9,12], emoji:'📚', name:'School time'},
+  {h:[12,13], emoji:'🍱', name:'Lunch time!'},
+  {h:[15,16], emoji:'⚽', name:'Play time!'},
+  {h:[18,19], emoji:'🍽️', name:'Dinner time!'},
+  {h:[19,20], emoji:'🛁', name:'Bath time'},
+  {h:[20,21], emoji:'📖', name:'Story time'},
+  {h:[21,23], emoji:'🌙', name:'Bedtime!'},
+];
+
+function hour24FromDisplay(h) {
+  // best-effort: assume "AM-ish" small hours map to their common real-life slot
+  return h;
+}
+
+function updateFreePlayCard(h12) {
+  // Use a simple heuristic: treat 1-5 as afternoon/evening equivalents (1pm-5pm), 6-11 as literal
+  let h = h12;
+  const eveningLike = [1,2,3,4,5].includes(h12);
+  const lookupH = eveningLike ? h12 + 12 : h12;
+  const match = activities.find(a => lookupH >= a.h[0] && lookupH < a.h[1])
+             || activities.find(a => h12 >= a.h[0] && h12 < a.h[1])
+             || activities[0];
+  const card = document.getElementById('activityCard');
+  card.querySelector('.activity-emoji').textContent = match.emoji;
+  card.querySelector('.activity-name').textContent = match.name;
+}
+
+// ---- Match mode ----
+let matchTargetTime = null;
+function newMatchActivity() {
+  const a = activities[Math.floor(Math.random() * activities.length)];
+  let h = a.h[0];
+  if (h > 12) h -= 12;
+  if (h === 0) h = 12;
+  matchTargetTime = { h, m: 0 };
+  document.getElementById('matchCard').querySelector('.activity-emoji').textContent = a.emoji;
+  document.getElementById('matchCard').querySelector('.activity-name').textContent = a.name;
+  document.getElementById('matchTarget').textContent = `Set the clock to ${matchTargetTime.h}:00`;
+  document.getElementById('matchStatus').textContent = '';
+  document.getElementById('matchStatus').className = 'challenge-status';
+}
+
+// ---- Challenge mode ----
+const challengeTimes = [
+  {h:1,m:0}, {h:2,m:0}, {h:3,m:0}, {h:4,m:0}, {h:5,m:0},
+  {h:6,m:0}, {h:7,m:0}, {h:8,m:0}, {h:9,m:0}, {h:10,m:0},
+  {h:3,m:15}, {h:6,m:30}, {h:9,m:45}, {h:12,m:15}, {h:7,m:30},
+];
+let challengeTarget = null;
+let score = 0;
+let lastCorrectTime = 0;
+
+function newChallenge() {
+  challengeTarget = challengeTimes[Math.floor(Math.random() * challengeTimes.length)];
+  document.getElementById('challengeTarget').textContent = `${challengeTarget.h}:${String(challengeTarget.m).padStart(2,'0')}`;
+  document.getElementById('challengeStatus').textContent = '';
+  document.getElementById('challengeStatus').className = 'challenge-status';
+}
+
+function checkMode(h, m) {
+  if (currentMode === 'free') {
+    updateFreePlayCard(h);
+  } else if (currentMode === 'match' && matchTargetTime) {
+    const statusEl = document.getElementById('matchStatus');
+    if (h === matchTargetTime.h && m === matchTargetTime.m) {
+      statusEl.textContent = '🎉 Well done!';
+      statusEl.className = 'challenge-status status-good';
+    } else {
+      statusEl.textContent = '';
+    }
+  } else if (currentMode === 'challenge' && challengeTarget) {
+    const statusEl = document.getElementById('challengeStatus');
+    if (h === challengeTarget.h && m === challengeTarget.m) {
+      if (Date.now() - lastCorrectTime > 800) {
+        score++;
+        document.getElementById('score').textContent = `Score: ${score}`;
+        lastCorrectTime = Date.now();
+      }
+      statusEl.textContent = '🎉 Correct!';
+      statusEl.className = 'challenge-status status-good';
+    } else {
+      statusEl.textContent = '';
+    }
+  }
+}
+
+// ---- Mode switching ----
+let currentMode = 'free';
+const btnFree = document.getElementById('btnFree');
+const btnMatch = document.getElementById('btnMatch');
+const btnChallenge = document.getElementById('btnChallenge');
+const freePlayBox = document.getElementById('freePlayBox');
+const matchBox = document.getElementById('matchBox');
+const challengeBox = document.getElementById('challengeBox');
+
+function setMode(mode) {
+  currentMode = mode;
+  [btnFree, btnMatch, btnChallenge].forEach(b => b.classList.remove('active'));
+  freePlayBox.style.display = 'none';
+  matchBox.style.display = 'none';
+  challengeBox.style.display = 'none';
+
+  if (mode === 'free') {
+    btnFree.classList.add('active');
+    freePlayBox.style.display = 'block';
+  } else if (mode === 'match') {
+    btnMatch.classList.add('active');
+    matchBox.style.display = 'block';
+    newMatchActivity();
+  } else if (mode === 'challenge') {
+    btnChallenge.classList.add('active');
+    challengeBox.style.display = 'block';
+    newChallenge();
+  }
+  render();
+}
+
+btnFree.addEventListener('click', () => setMode('free'));
+btnMatch.addEventListener('click', () => setMode('match'));
+btnChallenge.addEventListener('click', () => setMode('challenge'));
+document.getElementById('matchNext').addEventListener('click', newMatchActivity);
+document.getElementById('challengeNext').addEventListener('click', newChallenge);
+
+setTime(7, 0);
+setMode('free');
+
+// ---- PWA install prompt ----
+let deferredPrompt;
+const installBanner = document.getElementById('installBanner');
+const installBtn = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBanner.style.display = 'flex';
+});
+
+installBtn.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  installBanner.style.display = 'none';
+});
+
+window.addEventListener('appinstalled', () => {
+  installBanner.style.display = 'none';
+});
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+
+</body>
+</html>
